@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI News Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Roboto', Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            text-align: center; 
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb); 
+            min-height: 100vh; 
+        }
+        h1 { 
+            color: #0288d1; 
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1); 
+            margin: 20px 0 30px; 
+            font-size: 2.5em; 
+            animation: fadeIn 1s ease-in; 
+        }
+        input, button { 
+            margin: 8px; 
+            border-radius: 8px; 
+            border: none; 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); 
+            transition: all 0.3s ease; 
+        }
+        input { 
+            width: 60%; 
+            padding: 12px 16px; 
+            font-size: 16px; 
+            border: 2px solid #b0bec5; 
+            background: #fff; 
+        }
+        input:focus { 
+            border-color: #0288d1; 
+            box-shadow: 0 0 12px rgba(2, 136, 209, 0.5); 
+            outline: none; 
+        }
+        button { 
+            cursor: pointer; 
+            color: white; 
+            font-size: 14px; 
+            padding: 10px 20px; 
+            background: #0288d1; 
+        }
+        button:hover { 
+            background: #01579b; 
+            transform: scale(1.05); 
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); 
+        }
+        .controls { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 15px; 
+            margin-top: 10px; 
+        }
+        .debate-label { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 8px 12px; 
+            background: #fff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); 
+        }
+        #debateMode { 
+            margin: 0; 
+        }
+        #sendButton { 
+            padding: 8px 16px; /* Smaller, consistent size */
+            font-size: 14px; 
+        }
+        .chat-container { 
+            max-height: 500px; 
+            overflow-y: auto; 
+            border: 1px solid #b0bec5; 
+            padding: 15px; 
+            margin-top: 20px; 
+            background: #fff; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+            position: relative; 
+        }
+        .user-message, .bot-message { 
+            padding: 12px 18px; 
+            border-radius: 12px; 
+            margin: 8px; 
+            width: fit-content; 
+            max-width: 80%; 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); 
+            animation: slideIn 0.3s ease-out; 
+        }
+        .user-message { 
+            background: #b2dfdb; 
+            text-align: right; 
+            align-self: flex-end; 
+            margin-left: auto; 
+        }
+        .bot-message { 
+            background: #fce4ec; 
+            text-align: left; 
+            align-self: flex-start; 
+            position: relative; 
+        }
+        .debate-speaker { 
+            font-weight: bold; 
+        }
+        .audio-player { 
+            position: absolute; 
+            bottom: 5px; 
+            right: 5px; 
+            width: 250px; 
+            height: 40px; 
+            background: #fff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); 
+            cursor: move; 
+            z-index: 10; 
+        }
+        audio { 
+            width: 100%; 
+            height: 100%; 
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); 
+        }
+        .loading { 
+            color: #78909c; 
+            font-style: italic; 
+        }
+        .loading-container { 
+            padding: 12px 18px; 
+            border-radius: 12px; 
+            margin: 8px; 
+            width: fit-content; 
+            background: #fce4ec; 
+            text-align: left; 
+            align-self: flex-start; 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); 
+            animation: fadeIn 0.3s ease-in; 
+        }
+        .spinner { 
+            display: inline-flex; 
+            gap: 6px; 
+            margin-left: 10px; 
+        }
+        .spinner span { 
+            width: 10px; 
+            height: 10px; 
+            background: #0288d1; 
+            border-radius: 50%; 
+            animation: pulseDot 0.8s infinite alternate; 
+        }
+        .spinner span:nth-child(2) { animation-delay: 0.2s; }
+        .spinner span:nth-child(3) { animation-delay: 0.4s; }
+        .debate-text { 
+            text-align: justify; 
+            line-height: 1.6; /* Adds spacing/gaps between lines */
+        }
+        .debate-speaker { 
+            font-weight: bold; /* Ensures speaker names are bold */
+        }
+        @keyframes pulseDot { 
+            0% { transform: scale(1); opacity: 0.7; } 
+            100% { transform: scale(1.3); opacity: 1; } 
+        }
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+        @keyframes fadeOut { 
+            from { opacity: 1; } 
+            to { opacity: 0; } 
+        }
+    </style>
+</head>
+<body>
+    <h1>AI News Chat</h1>
+
+    <input type="text" id="topic" placeholder="Enter a topic...">
+    <button onclick="startVoiceInput()">🎤 Speak</button>
+
+    <div class="controls">
+        <label class="debate-label">
+            <input type="checkbox" id="debateMode"> Enable Debate Mode
+        </label>
+        <button id="sendButton" onclick="fetchNewsReport()">Send</button>
+    </div>
+
+    <div class="chat-container" id="chatBox"></div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000"; // Update to Render URL after deploy
+
+        function startVoiceInput() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.start();
+            recognition.onresult = function(event) {
+                document.getElementById("topic").value = event.results[0][0].transcript;
+            };
+        }
+
+        function stopAllAudio() {
+            const audioElements = document.querySelectorAll('audio');
+            audioElements.forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.removeAttribute('autoplay');
+            });
+        }
+
+        async function fetchNewsReport() {
+            let topic = document.getElementById("topic").value;
+            let debate = document.getElementById("debateMode").checked;
+            let chatBox = document.getElementById("chatBox");
+
+            if (!topic) {
+                alert("Please enter a topic.");
+                return;
+            }
+
+            stopAllAudio();
+
+            let userMessage = document.createElement("div");
+            userMessage.className = "user-message";
+            userMessage.innerHTML = `<strong>You:</strong> ${topic} ${debate ? "[Debate Mode]" : ""}`;
+            chatBox.appendChild(userMessage);
+
+            let loadingMessage = document.createElement("div");
+            loadingMessage.className = "loading-container";
+            loadingMessage.id = `loading-${Date.now()}`;
+            loadingMessage.innerHTML = `<strong>AI:</strong> Generating your news... <div class="spinner"><span></span><span></span><span></span></div>`;
+            chatBox.appendChild(loadingMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            let query = `${API_URL}/news_report?topic=${encodeURIComponent(topic)}&debate=${debate}`;
+            let res = await fetch(query);
+            let data = await res.json();
+
+            loadingMessage.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => loadingMessage.remove(), 300);
+
+            if (data.error) {
+                let errorMessage = document.createElement("div");
+                errorMessage.className = "bot-message";
+                errorMessage.innerHTML = `<strong>AI:</strong> ${data.error}`;
+                chatBox.appendChild(errorMessage);
+            } else {
+                let reportId = `report-${Date.now()}`;
+                let audioSrc = data.audio_url;
+                
+                let botMessage = document.createElement("div");
+                botMessage.className = "bot-message";
+                botMessage.id = reportId;
+                botMessage.innerHTML = `<strong>AI:</strong> ${formatReport(data.report, debate)}`;
+
+                let audioPlayer = document.createElement("div");
+                audioPlayer.className = `audio-player ${audioSrc ? '' : 'loading'}`;
+                audioPlayer.id = `audio-${reportId}`;
+
+                if (audioSrc) {
+                    let audio = document.createElement("audio");
+                    audio.controls = true;
+                    audio.autoplay = true;
+                    let source = document.createElement("source");
+                    source.src = audioSrc;
+                    source.type = "audio/mpeg";
+                    audio.appendChild(source);
+                    audioPlayer.appendChild(audio);
+                } else {
+                    audioPlayer.textContent = "Audio unavailable";
+                }
+
+                botMessage.appendChild(audioPlayer);
+                chatBox.appendChild(botMessage);
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function formatReport(report, debate) {
+            if (!debate) return `<p>${report}</p>`;
+            let lines = report.split("\n");
+            let debateHTML = "";
+            lines.forEach(line => {
+                if (line.trim()) {
+                    let parts = line.trim().split(": ", 2);
+                    if (parts.length === 2) {
+                        debateHTML += `<div class="debate-text"><span class="debate-speaker">${parts[0]}:</span> ${parts[1]}</div>`;
+                    } else {
+                        debateHTML += `<div class="debate-text">${line}</div>`;
+                    }
+                }
+            });
+            return debateHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('mousedown', (e) => {
+                let player = e.target.closest('.audio-player');
+                if (!player || player.classList.contains('loading')) return;
+
+                let shiftX = e.clientX - player.getBoundingClientRect().left;
+                let shiftY = e.clientY - player.getBoundingClientRect().top;
+
+                function moveAt(pageX, pageY) {
+                    const chatContainer = document.querySelector('.chat-container');
+                    const containerRect = chatContainer.getBoundingClientRect();
+                    const maxX = containerRect.width - player.offsetWidth; // Full width constraint
+
+                    // Ensure player stays within chat container horizontally
+                    let newX = pageX - shiftX;
+                    if (newX < 0) newX = 0;
+                    if (newX > maxX) newX = maxX;
+
+                    player.style.left = newX + 'px';
+                    player.style.top = pageY - shiftY + 'px';
+                }
+
+                function onMouseMove(event) {
+                    moveAt(event.pageX, event.pageY);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                }, { once: true });
+            });
+
+            document.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'AUDIO') e.stopPropagation();
+            }, true);
+        });
+    </script>
+</body>
+</html>
